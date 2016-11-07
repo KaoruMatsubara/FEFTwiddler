@@ -9,13 +9,13 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using FEFTwiddler.Extensions;
 
-namespace FEFTwiddler.GUI.MyCastle
+namespace FEFTwiddler.GUI.ChapterData
 {
-    public partial class CastleMap : Form
+    public partial class CastleViewer : Form
     {
         private Model.ChapterSaveRegions.MyCastleRegion _castleRegion;
 
-        public CastleMap(Model.ChapterSaveRegions.MyCastleRegion castleRegion)
+        public CastleViewer(Model.ChapterSaveRegions.MyCastleRegion castleRegion)
         {
             _castleRegion = castleRegion;
             InitializeComponent();
@@ -29,6 +29,8 @@ namespace FEFTwiddler.GUI.MyCastle
             {
                 txtBuildingList.Text += building.GetCondensedInformation() + Environment.NewLine;
             }
+
+            castleMap1.LoadCastleRegion(_castleRegion);
         }
 
         private void btnClose_Click(object sender, EventArgs e)
