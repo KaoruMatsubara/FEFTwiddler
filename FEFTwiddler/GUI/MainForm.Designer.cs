@@ -40,10 +40,7 @@
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabChapterData = new System.Windows.Forms.TabPage();
-<<<<<<< HEAD
-=======
             this.btnCastleMap = new System.Windows.Forms.Button();
->>>>>>> refs/remotes/Soaprman/master
             this.btnChapterHistory = new System.Windows.Forms.Button();
             this.lblAvatarName = new System.Windows.Forms.Label();
             this.tabUnitViewer = new System.Windows.Forms.TabPage();
@@ -52,10 +49,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.lstDead = new System.Windows.Forms.ListBox();
             this.pnlUnitView = new System.Windows.Forms.Panel();
-<<<<<<< HEAD
-=======
             this.lblUsesCustomData = new System.Windows.Forms.Label();
->>>>>>> refs/remotes/Soaprman/master
             this.btnTraits = new System.Windows.Forms.Button();
             this.btnExportUnit = new System.Windows.Forms.Button();
             this.btnSupport = new System.Windows.Forms.Button();
@@ -176,8 +170,6 @@
             this.tabChapterData.Name = "tabChapterData";
             this.tabChapterData.UseVisualStyleBackColor = true;
             // 
-<<<<<<< HEAD
-=======
             // btnCastleMap
             // 
             resources.ApplyResources(this.btnCastleMap, "btnCastleMap");
@@ -185,7 +177,6 @@
             this.btnCastleMap.UseVisualStyleBackColor = true;
             this.btnCastleMap.Click += new System.EventHandler(this.btnCastleMap_Click);
             // 
->>>>>>> refs/remotes/Soaprman/master
             // btnChapterHistory
             // 
             resources.ApplyResources(this.btnChapterHistory, "btnChapterHistory");
@@ -260,15 +251,12 @@
             resources.ApplyResources(this.pnlUnitView, "pnlUnitView");
             this.pnlUnitView.Name = "pnlUnitView";
             // 
-<<<<<<< HEAD
-=======
             // lblUsesCustomData
             // 
             resources.ApplyResources(this.lblUsesCustomData, "lblUsesCustomData");
             this.lblUsesCustomData.ForeColor = System.Drawing.Color.Magenta;
             this.lblUsesCustomData.Name = "lblUsesCustomData";
             // 
->>>>>>> refs/remotes/Soaprman/master
             // btnTraits
             // 
             resources.ApplyResources(this.btnTraits, "btnTraits");

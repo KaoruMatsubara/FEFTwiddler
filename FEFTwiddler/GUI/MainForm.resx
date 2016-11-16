@@ -556,14 +556,10 @@
     <value>NoControl</value>
   </data>
   <data name="btnTraits.Location" type="System.Drawing.Point, System.Drawing">
-<<<<<<< HEAD
     <value>426, 126</value>
   </data>
   <data name="btnTraits.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 5, 4, 5</value>
-=======
-    <value>284, 106</value>
->>>>>>> refs/remotes/Soaprman/master
   </data>
   <data name="btnTraits.Size" type="System.Drawing.Size, System.Drawing">
     <value>226, 35</value>
@@ -623,14 +619,11 @@
     <value>NoControl</value>
   </data>
   <data name="btnSupport.Location" type="System.Drawing.Point, System.Drawing">
-<<<<<<< HEAD
     <value>426, 82</value>
   </data>
   <data name="btnSupport.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 5, 4, 5</value>
-=======
-    <value>284, 77</value>
->>>>>>> refs/remotes/Soaprman/master
+    <!-- <value>284, 77</value> -->
   </data>
   <data name="btnSupport.Size" type="System.Drawing.Size, System.Drawing">
     <value>226, 35</value>
@@ -711,11 +704,8 @@
     <value>5</value>
   </data>
   <data name="flags1.Location" type="System.Drawing.Point, System.Drawing">
-<<<<<<< HEAD
     <value>426, 6</value>
-=======
-    <value>284, 28</value>
->>>>>>> refs/remotes/Soaprman/master
+    <!--<value>284, 28</value>-->
   </data>
   <data name="flags1.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>0, 0, 0, 0</value>
@@ -10229,13 +10219,11 @@
         AAAAAAAAgAAAAIABAADBgwAA4AcAAAAAAAA=
 </value>
   </data>
-<<<<<<< HEAD
   <data name="$this.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>4, 5, 4, 5</value>
-=======
+  </data>
   <data name="$this.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
     <value>NoControl</value>
->>>>>>> refs/remotes/Soaprman/master
   </data>
   <data name="$this.Text" xml:space="preserve">
     <value>FEFTwiddler</value>
