@@ -14,7 +14,19 @@ namespace FEFTwiddler.GUI.ChapterData
     [Designer("System.Windows.Forms.Design.ParentControlDesigner, System.Design", typeof(IDesigner))]
     public partial class CastleMap : UserControl
     {
+        // Model
         private Model.ChapterSaveRegions.MyCastleRegion _castleRegion;
+        private Dictionary<Model.Building, Rectangle> _virtualMap;
+        private Model.Building _selectedBuilding;
+        private Data.Building _selectedBuildingData;
+
+        // Numbers for drawing
+        private float scale = 3.0f; // Scale from virtual size to physical size
+        private int virtualCellWidth = 6;
+        private int virtualCellHeight = 6;
+
+        // Mouse stuff for event handling. Coordinates are relative to picCastle
+        private Point physicalMousePosition = Point.Empty;
 
         public CastleMap()
         {
@@ -24,6 +36,20 @@ namespace FEFTwiddler.GUI.ChapterData
         public void LoadCastleRegion(Model.ChapterSaveRegions.MyCastleRegion castleRegion)
         {
             _castleRegion = castleRegion;
+
+            // Build out the virtual map on load. It's cheaper than doing lookups as we go
+            _virtualMap = new Dictionary<Model.Building, Rectangle>();
+            foreach (var building in _castleRegion.Buildings)
+            {
+                var data = Data.Database.Buildings.GetByID(building.BuildingID);
+
+                _virtualMap.Add(building, new Rectangle(
+                    virtualCellWidth * Shift(building.LeftPosition),
+                    virtualCellHeight * Shift(building.TopPosition),
+                    virtualCellWidth * data.Size,
+                    virtualCellHeight * data.Size
+                    ));
+            }
         }
 
         private void CastleMap_Load(object sender, EventArgs e)
@@ -33,11 +59,13 @@ namespace FEFTwiddler.GUI.ChapterData
 
         private void picCastle_Paint(object sender, PaintEventArgs e)
         {
-            // Otherwise problems happen
+            // Otherwise problems happen in Visual Studio
             if (this.DesignMode) return;
 
             DrawMapBackground(e.Graphics);
             DrawBuildings(e.Graphics);
+            DrawSelectionOutline(e.Graphics);
+            DrawHoverHighlight(e.Graphics);
 
             //picCastle.BackColor = Color.FromArgb(255, 198, 154, 90);
 
@@ -65,92 +93,199 @@ namespace FEFTwiddler.GUI.ChapterData
 
         private void DrawBuildings(Graphics g)
         {
-            int scale = 3;
-            int cellWidth = 6;
-            int cellHeight = 6;
-
             Pen p = new Pen(Color.Black);
             Brush buildingBrush = new SolidBrush(Color.FromArgb(64, 0, 0, 0));
             Brush triangleBrush = new SolidBrush(Color.FromArgb(128, 0, 0, 0));
 
+            // TODO: Maybe cycle through virtual map
             foreach (var building in _castleRegion.Buildings)
             {
+                // TODO: Maybe include in virtual map to improve performance
                 var data = Data.Database.Buildings.GetByID(building.BuildingID);
 
                 // Building outline
+                // TODO: Maybe use rectangles from virtual map
                 g.FillRectangle(buildingBrush,
-                    scale * (building.LeftPosition - 1) * cellWidth,
-                    scale * (building.TopPosition - 1) * cellHeight,
-                    scale * data.Size * cellWidth,
-                    scale * data.Size * cellHeight);
+                    scale * Shift(building.LeftPosition) * virtualCellWidth,
+                    scale * Shift(building.TopPosition) * virtualCellHeight,
+                    scale * data.Size * virtualCellWidth,
+                    scale * data.Size * virtualCellHeight);
                 g.DrawRectangle(p,
-                    scale * (building.LeftPosition - 1) * cellWidth,
-                    scale * (building.TopPosition - 1) * cellHeight,
-                    scale * data.Size * cellWidth,
-                    scale * data.Size * cellHeight);
+                    scale * Shift(building.LeftPosition) * virtualCellWidth,
+                    scale * Shift(building.TopPosition) * virtualCellHeight,
+                    scale * data.Size * virtualCellWidth,
+                    scale * data.Size * virtualCellHeight);
 
                 // Little arrow
                 switch (building.DirectionFacing)
                 {
-                    case 0: // Down
+                    case Enums.BuildingDirection.Down:
                         g.FillPolygon(triangleBrush, new PointF[]
                         {
                             new PointF(
-                                scale * ((building.LeftPosition - 1 + (data.Size * 0.5f)) * cellWidth + (cellWidth * 0.0f)),
-                                scale * ((building.TopPosition + data.Size - 1) * cellHeight)),
+                                scale * ((Shift(building.LeftPosition) + (data.Size * 0.5f)) * virtualCellWidth + (virtualCellWidth * 0.0f)),
+                                scale * ((Shift(building.TopPosition) + data.Size) * virtualCellHeight)),
                             new PointF(
-                                scale * ((building.LeftPosition - 1 + (data.Size * 0.5f)) * cellWidth + (cellWidth * -0.25f)),
-                                scale * ((building.TopPosition + data.Size - 1) * cellHeight - (cellHeight * 0.5f))),
+                                scale * ((Shift(building.LeftPosition) + (data.Size * 0.5f)) * virtualCellWidth + (virtualCellWidth * -0.25f)),
+                                scale * ((Shift(building.TopPosition) + data.Size) * virtualCellHeight - (virtualCellHeight * 0.5f))),
                             new PointF(
-                                scale * ((building.LeftPosition - 1 + (data.Size * 0.5f)) * cellWidth + (cellWidth * 0.25f)),
-                                scale * ((building.TopPosition + data.Size - 1) * cellHeight - (cellHeight * 0.5f))),
+                                scale * ((Shift(building.LeftPosition) + (data.Size * 0.5f)) * virtualCellWidth + (virtualCellWidth * 0.25f)),
+                                scale * ((Shift(building.TopPosition) + data.Size) * virtualCellHeight - (virtualCellHeight * 0.5f))),
                         });
                         break;
-                    case 1: // Left
+                    case Enums.BuildingDirection.Left:
                         g.FillPolygon(triangleBrush, new PointF[]
                         {
                             new PointF(
-                                scale * ((building.LeftPosition - 1) * cellWidth),
-                                scale * ((building.TopPosition - 1 + (data.Size * 0.5f)) * cellHeight + (cellHeight * 0.0f))),
+                                scale * (Shift(building.LeftPosition) * virtualCellWidth),
+                                scale * ((Shift(building.TopPosition) + (data.Size * 0.5f)) * virtualCellHeight + (virtualCellHeight * 0.0f))),
                             new PointF(
-                                scale * ((building.LeftPosition - 1) * cellWidth + (cellWidth * 0.5f)),
-                                scale * ((building.TopPosition - 1 + (data.Size * 0.5f)) * cellHeight + (cellHeight * -0.25f))),
+                                scale * (Shift(building.LeftPosition) * virtualCellWidth + (virtualCellWidth * 0.5f)),
+                                scale * ((Shift(building.TopPosition) + (data.Size * 0.5f)) * virtualCellHeight + (virtualCellHeight * -0.25f))),
                             new PointF(
-                                scale * ((building.LeftPosition - 1) * cellWidth + (cellWidth * 0.5f)),
-                                scale * ((building.TopPosition - 1 + (data.Size * 0.5f)) * cellHeight + (cellHeight * 0.25f))),
+                                scale * (Shift(building.LeftPosition) * virtualCellWidth + (virtualCellWidth * 0.5f)),
+                                scale * ((Shift(building.TopPosition) + (data.Size * 0.5f)) * virtualCellHeight + (virtualCellHeight * 0.25f))),
                         });
                         break;
-                    case 2: // Up
+                    case Enums.BuildingDirection.Up:
                         g.FillPolygon(triangleBrush, new PointF[]
                         {
                             new PointF(
-                                scale * ((building.LeftPosition - 1 + (data.Size * 0.5f)) * cellWidth + (cellWidth * 0.0f)),
-                                scale * ((building.TopPosition - 1) * cellHeight)),
+                                scale * ((Shift(building.LeftPosition) + (data.Size * 0.5f)) * virtualCellWidth + (virtualCellWidth * 0.0f)),
+                                scale * (Shift(building.TopPosition) * virtualCellHeight)),
                             new PointF(
-                                scale * ((building.LeftPosition - 1 + (data.Size * 0.5f)) * cellWidth + (cellWidth * -0.25f)),
-                                scale * ((building.TopPosition - 1) * cellHeight + (cellHeight * 0.5f))),
+                                scale * ((Shift(building.LeftPosition) + (data.Size * 0.5f)) * virtualCellWidth + (virtualCellWidth * -0.25f)),
+                                scale * (Shift(building.TopPosition) * virtualCellHeight + (virtualCellHeight * 0.5f))),
                             new PointF(
-                                scale * ((building.LeftPosition - 1 + (data.Size * 0.5f)) * cellWidth + (cellWidth * 0.25f)),
-                                scale * ((building.TopPosition - 1) * cellHeight + (cellHeight * 0.5f))),
+                                scale * ((Shift(building.LeftPosition) + (data.Size * 0.5f)) * virtualCellWidth + (virtualCellWidth * 0.25f)),
+                                scale * (Shift(building.TopPosition) * virtualCellHeight + (virtualCellHeight * 0.5f))),
                         });
                         break;
-                    case 3: // Right
+                    case Enums.BuildingDirection.Right:
                         g.FillPolygon(triangleBrush, new PointF[]
                         {
                             new PointF(
-                                scale * ((building.LeftPosition + data.Size - 1) * cellWidth),
-                                scale * ((building.TopPosition - 1 + (data.Size * 0.5f)) * cellHeight + (cellHeight * 0.0f))),
+                                scale * ((Shift(building.LeftPosition) + data.Size) * virtualCellWidth),
+                                scale * ((Shift(building.TopPosition) + (data.Size * 0.5f)) * virtualCellHeight + (virtualCellHeight * 0.0f))),
                             new PointF(
-                                scale * ((building.LeftPosition + data.Size - 1) * cellWidth - (cellWidth * 0.5f)),
-                                scale * ((building.TopPosition - 1 + (data.Size * 0.5f)) * cellHeight + (cellHeight * -0.25f))),
+                                scale * ((Shift(building.LeftPosition) + data.Size) * virtualCellWidth - (virtualCellWidth * 0.5f)),
+                                scale * ((Shift(building.TopPosition) + (data.Size * 0.5f)) * virtualCellHeight + (virtualCellHeight * -0.25f))),
                             new PointF(
-                                scale * ((building.LeftPosition + data.Size - 1) * cellWidth - (cellWidth * 0.5f)),
-                                scale * ((building.TopPosition - 1 + (data.Size * 0.5f)) * cellHeight + (cellHeight * 0.25f))),
+                                scale * ((Shift(building.LeftPosition) + data.Size) * virtualCellWidth - (virtualCellWidth * 0.5f)),
+                                scale * ((Shift(building.TopPosition) + (data.Size * 0.5f)) * virtualCellHeight + (virtualCellHeight * 0.25f))),
                         });
                         break;
                 }
             }
         }
+
+        private void DrawHoverHighlight(Graphics g)
+        {
+            Brush b = new SolidBrush(Color.FromArgb(128, 255, 255, 0));
+
+            if (physicalMousePosition != Point.Empty)
+            {
+                float physW = scale * virtualCellWidth;
+                float physH = scale * virtualCellHeight;
+                float physX = (float)Math.Floor(physicalMousePosition.X / physW) * physW;
+                float physY = (float)Math.Floor(physicalMousePosition.Y / physH) * physH;
+
+                g.FillRectangle(b, physX, physY, physW, physH);
+            }
+        }
+
+        private void DrawSelectionOutline(Graphics g)
+        {
+            Pen p = new Pen(Color.Red, scale);
+
+            if (_selectedBuilding != null)
+            {
+                float physW = scale * virtualCellWidth * _selectedBuildingData.Size;
+                float physH = scale * virtualCellHeight * _selectedBuildingData.Size;
+                float physX = scale * virtualCellWidth * Shift(_selectedBuilding.LeftPosition);
+                float physY = scale * virtualCellHeight * Shift(_selectedBuilding.TopPosition);
+
+                g.DrawRectangle(p, physX, physY, physW, physH);
+            }
+        }
+
+        // Select a building or rotate it clockwise
+        private void picCastle_MouseClick(object sender, MouseEventArgs e)
+        {
+            int virtX = (int)(physicalMousePosition.X / scale);
+            int virtY = (int)(physicalMousePosition.Y / scale);
+
+            // Consult map
+            Model.Building selectedBuilding;
+            var virtualBuilding = _virtualMap.Where(x => x.Value.Contains(virtX, virtY)).FirstOrDefault();
+            if (!virtualBuilding.Equals(default(KeyValuePair<Model.Building, Rectangle>)))
+            {
+                selectedBuilding = virtualBuilding.Key;
+            }
+            else
+            {
+                selectedBuilding = null;
+            }
+
+            // Act
+            if (selectedBuilding == null)
+            {
+                // Deselect
+                _selectedBuilding = null;
+                _selectedBuildingData = null;
+            }
+            else if (selectedBuilding == _selectedBuilding)
+            {
+                // Rotate
+                if (_selectedBuilding.DirectionFacing == Enums.BuildingDirection.Down)
+                {
+                    _selectedBuilding.DirectionFacing = Enums.BuildingDirection.Left;
+                }
+                else if (_selectedBuilding.DirectionFacing == Enums.BuildingDirection.Left)
+                {
+                    _selectedBuilding.DirectionFacing = Enums.BuildingDirection.Up;
+                }
+                else if (_selectedBuilding.DirectionFacing == Enums.BuildingDirection.Up)
+                {
+                    _selectedBuilding.DirectionFacing = Enums.BuildingDirection.Right;
+                }
+                else if (_selectedBuilding.DirectionFacing == Enums.BuildingDirection.Right)
+                {
+                    _selectedBuilding.DirectionFacing = Enums.BuildingDirection.Down;
+                }
+            }
+            else
+            {
+                // Select
+                _selectedBuilding = selectedBuilding;
+                _selectedBuildingData = Data.Database.Buildings.GetByID(_selectedBuilding.BuildingID);
+            }
+        }
+
+        // Start showing hover outline
+        private void picCastle_MouseMove(object sender, MouseEventArgs e)
+        {
+            physicalMousePosition = new Point(e.X - picCastle.Left, e.Y - picCastle.Top);
+            picCastle.Invalidate();
+        }
+
+        // Stop showing hover outline
+        private void picCastle_MouseLeave(object sender, EventArgs e)
+        {
+            physicalMousePosition = Point.Empty;
+            picCastle.Invalidate();
+        }
+
+        /// <summary>
+        /// Changes a one-indexed value to a zero-indexed value. For Model.Building position values, which are one-indexed
+        /// </summary>
+        /// <remarks>This is to cut down on all the stray "- 1" in the code</remarks>
+        private int Shift(int modelBuildingPosition)
+        {
+            return modelBuildingPosition - 1;
+        }
+
+        #region "Deprecated"
 
         /// <summary>
         /// Deprecated, but here as a code reference for now
@@ -239,5 +374,7 @@ namespace FEFTwiddler.GUI.ChapterData
                 zoom * horizontalCells * cellWidth - 1,
                 zoom * verticalCells * cellHeight - 1);
         }
+
+        #endregion
     }
 }
