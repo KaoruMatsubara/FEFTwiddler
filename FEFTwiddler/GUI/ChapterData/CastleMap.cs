@@ -66,10 +66,6 @@ namespace FEFTwiddler.GUI.ChapterData
             DrawBuildings(e.Graphics);
             DrawSelectionOutline(e.Graphics);
             DrawHoverHighlight(e.Graphics);
-
-            //picCastle.BackColor = Color.FromArgb(255, 198, 154, 90);
-
-            //DrawGrid(e.Graphics);
         }
 
         private void DrawMapBackground(Graphics g)
@@ -215,57 +211,95 @@ namespace FEFTwiddler.GUI.ChapterData
             int virtX = (int)(physicalMousePosition.X / scale);
             int virtY = (int)(physicalMousePosition.Y / scale);
 
-            // Consult map
-            Model.Building selectedBuilding;
-            var virtualBuilding = _virtualMap.Where(x => x.Value.Contains(virtX, virtY)).FirstOrDefault();
-            if (!virtualBuilding.Equals(default(KeyValuePair<Model.Building, Rectangle>)))
-            {
-                selectedBuilding = virtualBuilding.Key;
-            }
-            else
-            {
-                selectedBuilding = null;
-            }
+            // TODO: Maybe compare point with current rectangle to shortcut past the "consult map" for rotations and make this feel more responsive
 
-            // Act
-            if (selectedBuilding == null)
+            if (e.Button == MouseButtons.Left) // Select or deselect (TODO: Move)
             {
-                // Deselect
-                _selectedBuilding = null;
-                _selectedBuildingData = null;
-            }
-            else if (selectedBuilding == _selectedBuilding)
-            {
-                // Rotate
-                if (_selectedBuilding.DirectionFacing == Enums.BuildingDirection.Down)
+                // Consult map
+                Model.Building selectedBuilding;
+                var virtualBuilding = _virtualMap.Where(x => x.Value.Contains(virtX, virtY)).FirstOrDefault();
+                if (!virtualBuilding.Equals(default(KeyValuePair<Model.Building, Rectangle>)))
                 {
-                    _selectedBuilding.DirectionFacing = Enums.BuildingDirection.Left;
+                    selectedBuilding = virtualBuilding.Key;
                 }
-                else if (_selectedBuilding.DirectionFacing == Enums.BuildingDirection.Left)
+                else
                 {
-                    _selectedBuilding.DirectionFacing = Enums.BuildingDirection.Up;
+                    selectedBuilding = null;
                 }
-                else if (_selectedBuilding.DirectionFacing == Enums.BuildingDirection.Up)
+
+                // Act
+                if (selectedBuilding == null)
                 {
-                    _selectedBuilding.DirectionFacing = Enums.BuildingDirection.Right;
+                    DeselectBuilding();
                 }
-                else if (_selectedBuilding.DirectionFacing == Enums.BuildingDirection.Right)
+                else
                 {
-                    _selectedBuilding.DirectionFacing = Enums.BuildingDirection.Down;
+                    SelectBuilding(selectedBuilding);
                 }
             }
-            else
+            else if (e.Button == MouseButtons.Right) // Rotate
             {
-                // Select
-                _selectedBuilding = selectedBuilding;
-                _selectedBuildingData = Data.Database.Buildings.GetByID(_selectedBuilding.BuildingID);
+                // Consult map
+                Model.Building selectedBuilding;
+                var virtualBuilding = _virtualMap.Where(x => x.Value.Contains(virtX, virtY)).FirstOrDefault();
+                if (!virtualBuilding.Equals(default(KeyValuePair<Model.Building, Rectangle>)))
+                {
+                    selectedBuilding = virtualBuilding.Key;
+                }
+                else
+                {
+                    selectedBuilding = null;
+                }
+
+                // Act
+                if (selectedBuilding != null)
+                {
+                    RotateBuilding(selectedBuilding);
+                }
             }
+        }
+
+        /// <summary>
+        /// Rotate a building clockwise
+        /// </summary>
+        private void RotateBuilding(Model.Building building)
+        {
+            if (building.DirectionFacing == Enums.BuildingDirection.Down)
+            {
+                building.DirectionFacing = Enums.BuildingDirection.Left;
+            }
+            else if (building.DirectionFacing == Enums.BuildingDirection.Left)
+            {
+                building.DirectionFacing = Enums.BuildingDirection.Up;
+            }
+            else if (building.DirectionFacing == Enums.BuildingDirection.Up)
+            {
+                building.DirectionFacing = Enums.BuildingDirection.Right;
+            }
+            else if (building.DirectionFacing == Enums.BuildingDirection.Right)
+            {
+                building.DirectionFacing = Enums.BuildingDirection.Down;
+            }
+        }
+
+        private void DeselectBuilding()
+        {
+            _selectedBuilding = null;
+            lblSelectedBuilding.Text = "Selected: (none)";
+            _selectedBuildingData = null;
+        }
+
+        private void SelectBuilding(Model.Building building)
+        {
+            _selectedBuilding = building;
+            lblSelectedBuilding.Text = $"Selected: {_selectedBuilding.BuildingID.ToString()}";
+            _selectedBuildingData = Data.Database.Buildings.GetByID(_selectedBuilding.BuildingID);
         }
 
         // Start showing hover outline
         private void picCastle_MouseMove(object sender, MouseEventArgs e)
         {
-            physicalMousePosition = new Point(e.X - picCastle.Left, e.Y - picCastle.Top);
+            physicalMousePosition = new Point(e.X, e.Y);
             picCastle.Invalidate();
         }
 
@@ -284,97 +318,5 @@ namespace FEFTwiddler.GUI.ChapterData
         {
             return modelBuildingPosition - 1;
         }
-
-        #region "Deprecated"
-
-        /// <summary>
-        /// Deprecated, but here as a code reference for now
-        /// </summary>
-        private void DrawGrid(Graphics g)
-        {
-            // Grid size
-            int horizontalCells = 29;
-            int cellWidth = 6;
-
-            int verticalCells = 30;
-            int cellHeight = 6;
-
-            int zoom = 3;
-
-            // Draw lightened areas
-            Brush darkBrush = new SolidBrush(Color.FromArgb(255, 222, 182, 123));
-            g.FillRectangle(darkBrush,
-                zoom * cellWidth * 1,
-                zoom * cellHeight * 1,
-                zoom * cellWidth * 6,
-                zoom * cellHeight * 28);
-            g.FillRectangle(darkBrush,
-                zoom * cellWidth * 7,
-                zoom * cellHeight * 4,
-                zoom * cellWidth * 3,
-                zoom * cellHeight * 25);
-            g.FillRectangle(darkBrush,
-                zoom * cellWidth * 10,
-                zoom * cellHeight * 5,
-                zoom * cellWidth * 2,
-                zoom * cellHeight * 18);
-            g.FillRectangle(darkBrush,
-                zoom * cellWidth * 12,
-                zoom * cellHeight * 7,
-                zoom * cellWidth * 5,
-                zoom * cellHeight * 16);
-            g.FillRectangle(darkBrush,
-                zoom * cellWidth * 17,
-                zoom * cellHeight * 5,
-                zoom * cellWidth * 2,
-                zoom * cellHeight * 18);
-            g.FillRectangle(darkBrush,
-                zoom * cellWidth * 19,
-                zoom * cellHeight * 4,
-                zoom * cellWidth * 3,
-                zoom * cellHeight * 25);
-            g.FillRectangle(darkBrush,
-                zoom * cellWidth * 22,
-                zoom * cellHeight * 1,
-                zoom * cellWidth * 6,
-                zoom * cellHeight * 28);
-
-            // Draw grid lines
-            //Pen gridPen = new Pen(Color.FromArgb(255, 198, 158, 107));
-            Pen gridPen = new Pen(Color.FromArgb(255, 173, 130, 74));
-            gridPen.Width = zoom;
-
-            for (int x = 0; x < horizontalCells; x++)
-            {
-                // Vertical line
-                g.DrawLine(gridPen,
-                    zoom * x * cellWidth,
-                    zoom * 0,
-                    zoom * x * cellWidth,
-                    zoom * verticalCells * cellHeight);
-            }
-
-            for (int y = 0; y < verticalCells; y++)
-            {
-                // Horizontal line
-                g.DrawLine(gridPen,
-                    zoom * 0,
-                    zoom * y * cellHeight,
-                    zoom * horizontalCells * cellWidth,
-                    zoom * y * cellHeight);
-            }
-
-            // Draw border
-            Pen borderPen = new Pen(Color.FromArgb(255, 99, 77, 45));
-            borderPen.Width = zoom;
-
-            g.DrawRectangle(borderPen,
-                zoom * 0,
-                zoom * 0,
-                zoom * horizontalCells * cellWidth - 1,
-                zoom * verticalCells * cellHeight - 1);
-        }
-
-        #endregion
     }
 }
